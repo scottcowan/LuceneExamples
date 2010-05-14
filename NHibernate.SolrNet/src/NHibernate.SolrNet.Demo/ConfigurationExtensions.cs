@@ -1,0 +1,56 @@
+﻿#region license
+// Copyright (c) 2007-2010 Mauricio Scheffer
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+//  
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#endregion
+
+using System;
+using System.Collections.Generic;
+using NHibernate.ByteCode.Castle;
+using NHibernate.Connection;
+using NHibernate.Dialect;
+using NHibernate.Driver;
+using Environment = NHibernate.Cfg.Environment;
+
+namespace NHibernate.SolrNet.Demo {
+    public static class ConfigurationExtensions {
+
+        public static void SetListener(this Cfg.Configuration config, object listener) {
+            if (listener == null)
+                throw new ArgumentNullException("listener");
+            foreach (var intf in listener.GetType().GetInterfaces())
+                if (CfgHelper.ListenerDict.ContainsKey(intf))
+                    foreach (var t in CfgHelper.ListenerDict[intf])
+                        config.SetListener(t, listener);
+        }
+
+        public static Configuration GetEmptyNHConfig() {
+            var nhConfig = new Configuration {
+                Properties = new Dictionary<string, string> {
+                    {Environment.ConnectionProvider, typeof(DriverConnectionProvider).FullName},
+                    {Environment.ConnectionDriver, typeof(SQLite20Driver).FullName},
+                    {Environment.Dialect, typeof(SQLiteDialect).FullName},
+                    {Environment.ConnectionString, "Data Source=test.db;Version=3;New=True;"},
+                    {Environment.ProxyFactoryFactoryClass, typeof(ProxyFactoryFactory).AssemblyQualifiedName},
+                }
+            };
+            return nhConfig;
+        }
+
+        public static Configuration GetNhConfig() {
+            var nhConfig = GetEmptyNHConfig();
+            nhConfig.Register(typeof (Entity));
+            return nhConfig;
+        }
+    }
+}
